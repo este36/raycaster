@@ -20,4 +20,4 @@ function main(): void {
   console.log(ctx)
 }
 
-document.addEventListener('DOMContentLoaded', main);
+main();
