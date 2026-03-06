@@ -22,13 +22,34 @@ let frame_count = 0;
 const GRID_COLS = 10;
 const GRID_ROWS = 10;
 
+const MINIMAP_WIDTH = Math.floor(WIDTH / 4);
+const MINIMAP_HEIGHT = MINIMAP_WIDTH; // square for now
+
+const CELL_WIDTH = MINIMAP_WIDTH / GRID_COLS;
+const CELL_HEIGHT = MINIMAP_HEIGHT / GRID_ROWS;
+
+const keys: Set<string> = new Set();
+
+class Vector2
+{
+  public x: number;
+  public y: number;
+  constructor(x: number, y: number)
+  {
+    this.x = x;
+    this.y = y;
+  }
+}
+
+
 type Renderer = {
   ctx: CanvasRenderingContext2D;
   img: ImageData;
   data: Uint8ClampedArray;
+  player: Vector2;
 };
 
-function putPixel(data: Uint8ClampedArray, x: number, y: number, r: number, g: number, b: number): void
+function putPixelRGB(data: Uint8ClampedArray, x: number, y: number, r: number, g: number, b: number): void
 {
   const index = (x + WIDTH * y) * 4;
 
@@ -38,47 +59,76 @@ function putPixel(data: Uint8ClampedArray, x: number, y: number, r: number, g: n
   data[index + 3] = 0xff;
 }
 
-function renderMinimap(r: Renderer): void
+function putPixel(data: Uint8ClampedArray, x: number, y: number, color: number): void
 {
-  const { data } = r;
+  const index = (x + WIDTH * y) * 4;
 
-  const minimapWidth = Math.floor(WIDTH / 5);
-  const minimapHeight = minimapWidth; // square for now
+  data[index]     = (color >> 16) & 255;
+  data[index + 1] = (color >> 8) & 255;
+  data[index + 2] = color & 255;
+  data[index + 3] = 0xff;
+}
 
-  const cellWidth = minimapWidth / GRID_COLS;
-  const cellHeight = minimapHeight / GRID_ROWS;
+function drawRectangle(data: Uint8ClampedArray, startX: number, startY: number, width: number, height: number, color: number): void
+{
+  const y_end = startY + height;
+  const x_end = startX + width;
 
-  const startX = WIDTH - minimapWidth - 5;
-  const startY = HEIGHT - minimapHeight - 5;
+  for (let y = startY; y < y_end; y++)
+  {
+    for (let x = startX; x < x_end; x++)
+      putPixel(data, x, y, color);
+  }
+}
+
+function drawMinimap(r: Renderer): void
+{
+  const { data, player } = r;
+
+  const startX = WIDTH - MINIMAP_WIDTH - 5;
+  const startY = HEIGHT - MINIMAP_HEIGHT - 5;
 
   let y = startY;
   let y_dist = 0;
 
-  while (y_dist < minimapHeight)
+  while (y_dist < MINIMAP_HEIGHT)
   {
       let x_dist = 0;
       let x = startX;
 
       y_dist = Math.abs(startY - y);
-      while (x_dist < minimapWidth)
+      while (x_dist < MINIMAP_WIDTH)
       {
         x_dist = Math.abs(startX - x);
-        if (x_dist % cellWidth < 0.1)
+        if (x_dist % CELL_WIDTH < 0.1)
         {
-          putPixel(data, x, y, 0x99, 0x99, 0x99);
+          putPixel(data, x, y, 0x999999);
         }
-        else if (y_dist % cellHeight < 0.1)
+        else if (y_dist % CELL_HEIGHT < 0.1)
         {
-          putPixel(data, x, y, 0x99, 0x99, 0x99);
+          putPixel(data, x, y, 0x999999);
         }
         else
         {
-          putPixel(data, x, y, 0x18, 0x18, 0x18);
+          putPixel(data, x, y, 0x181818);
         }
         x++;
       }
       y++;
   }
+  const player_size = 5;
+  if (player.x === -1 || player.y === -1)
+  {
+    player.x = startX + Math.floor(MINIMAP_WIDTH / 2) - Math.floor(player_size / 2);
+    player.y = startY + Math.floor(MINIMAP_HEIGHT / 2) - Math.floor(player_size / 2);
+  }
+  drawRectangle(
+    data,
+    player.x,
+    player.y,
+    player_size,
+    5,
+    0xff0000);
 }
 
 function render(r: Renderer): void
@@ -93,11 +143,15 @@ function render(r: Renderer): void
       const r = (Math.sqrt(x*x + y*y) + frame_count) % 256;
       const g = ((y * Math.log(frame_count)) % 256);
       const b = 150;
-      putPixel(data, x, y, r, g, b);
+      putPixelRGB(data, x, y, r, g, b);
     }
   }
 
-  renderMinimap(r);
+  if (keys.has('ArrowUp')) r.player.y--;
+  if (keys.has('ArrowDown')) r.player.y++;
+  if (keys.has('ArrowLeft')) r.player.x--;
+  if (keys.has('ArrowRight')) r.player.x++;
+  drawMinimap(r);
 
   ctx.putImageData(img, 0, 0);
   const elapsed = performance.now() - perf1;
@@ -134,10 +188,21 @@ function main(): void
   //   }
   // }
 
-  fps_printer = document.querySelector('p');
+  document.addEventListener("keydown", (e) => {
+    e.preventDefault();
+    keys.add(e.key);
+  });
+  document.addEventListener("keyup", (e) => {
+    e.preventDefault();
+    keys.delete(e.key);
+  });
+
+  fps_printer = document.querySelector('#fps');
+
+  const player = new Vector2(-1, -1);
 
   const loop = () => {
-    render({ctx, img, data});
+    render({ctx, img, data, player});
     requestAnimationFrame(loop);
   };
   loop();
