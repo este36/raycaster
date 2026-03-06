@@ -42,8 +42,9 @@ function renderMinimap(r: Renderer): void
 {
   const { data } = r;
 
-  const minimapWidth = Math.floor(WIDTH / 4);
-  const minimapHeight = Math.floor(HEIGHT / 4);
+  const minimapWidth = Math.floor(WIDTH / 5);
+  const minimapHeight = minimapWidth; // square for now
+
   const cellWidth = minimapWidth / GRID_COLS;
   const cellHeight = minimapHeight / GRID_ROWS;
 
