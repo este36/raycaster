@@ -35,8 +35,8 @@ function render(r: Renderer): void
   {
     for (let x = 0; x < WIDTH; x++)
     {
-      const r = (x % 0xff);
-      const g = (y % 256);
+      const r = ((x * Math.log(frame_count)) % 0xff);
+      const g = ((y * Math.log(frame_count)) % 256);
       const b = 150;
       putPixel(data, x, y, r, g, b);
     }
