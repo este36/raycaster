@@ -4,6 +4,7 @@ const _factor = 2;
 const WIDTH = 400 * _factor;
 const HEIGHT = 300 * _factor;
 let fps_printer: HTMLParagraphElement | null = null;
+let player_printer: HTMLParagraphElement | null = null;
 let frame_count = 0;
 
 // const map = [
@@ -41,13 +42,17 @@ class Vector2
   }
 }
 
-
 type Renderer = {
   ctx: CanvasRenderingContext2D;
   img: ImageData;
   data: Uint8ClampedArray;
   player: Vector2;
 };
+
+function is_valid_point(x: number, y: number)
+{
+	return x > 0 && x < WIDTH && y > 0 && y < HEIGHT;
+}
 
 function putPixelRGB(data: Uint8ClampedArray, x: number, y: number, r: number, g: number, b: number): void
 {
@@ -81,6 +86,29 @@ function drawRectangle(data: Uint8ClampedArray, startX: number, startY: number, 
   }
 }
 
+function drawLine(data: Uint8ClampedArray, p1: Vector2, p2: Vector2, color: number, thickness: number = 1)
+{
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const steps = Math.max(Math.abs(dx), Math.abs(dy));
+    const xInc = dx / steps;
+    const yInc = dy / steps;
+    let x = p1.x;
+    let y = p1.y;
+
+    for (let i = 0; i <= steps; i++)
+    {
+        for (let tx = -Math.floor(thickness/2); tx <= Math.floor(thickness/2); tx++)
+        {
+            for (let ty = -Math.floor(thickness/2); ty <= Math.floor(thickness/2); ty++)
+                putPixel(data, x + tx, y + ty, color);
+        }
+
+        x += xInc;
+        y += yInc;
+    }
+}
+
 function drawMinimap(r: Renderer): void
 {
   const { data, player } = r;
@@ -88,47 +116,30 @@ function drawMinimap(r: Renderer): void
   const startX = WIDTH - MINIMAP_WIDTH - 5;
   const startY = HEIGHT - MINIMAP_HEIGHT - 5;
 
-  let y = startY;
-  let y_dist = 0;
+  drawRectangle(data, startX, startY, MINIMAP_WIDTH, MINIMAP_HEIGHT, 0x181818);
 
-  while (y_dist < MINIMAP_HEIGHT)
+  // Grid
+  const gridColor = 0x999999;
+  let gridY = startY;
+  for (let i = 0; i < GRID_COLS; i++)
   {
-      let x_dist = 0;
-      let x = startX;
-
-      y_dist = Math.abs(startY - y);
-      while (x_dist < MINIMAP_WIDTH)
-      {
-        x_dist = Math.abs(startX - x);
-        if (x_dist % CELL_WIDTH < 0.1)
-        {
-          putPixel(data, x, y, 0x999999);
-        }
-        else if (y_dist % CELL_HEIGHT < 0.1)
-        {
-          putPixel(data, x, y, 0x999999);
-        }
-        else
-        {
-          putPixel(data, x, y, 0x181818);
-        }
-        x++;
-      }
-      y++;
+  	drawLine(data, new Vector2(startX, gridY), new Vector2(startX + MINIMAP_WIDTH, gridY), gridColor);
+	gridY += CELL_HEIGHT;
   }
+  drawLine(data, new Vector2(startX, gridY), new Vector2(startX + MINIMAP_WIDTH, gridY), gridColor);
+  let gridX = startX;
+  for (let i = 0; i < GRID_ROWS; i++)
+  {
+  	drawLine(data, new Vector2(gridX, startY), new Vector2(gridX, startY + MINIMAP_HEIGHT), gridColor);
+	gridX += CELL_WIDTH;
+  }
+  drawLine(data, new Vector2(gridX, startY), new Vector2(gridX, startY + MINIMAP_HEIGHT), gridColor);
+
+  // Player
   const player_size = 5;
-  if (player.x === -1 || player.y === -1)
-  {
-    player.x = startX + Math.floor(MINIMAP_WIDTH / 2) - Math.floor(player_size / 2);
-    player.y = startY + Math.floor(MINIMAP_HEIGHT / 2) - Math.floor(player_size / 2);
-  }
-  drawRectangle(
-    data,
-    player.x,
-    player.y,
-    player_size,
-    5,
-    0xff0000);
+  const px = Math.floor(startX + player.x*CELL_WIDTH);
+  const py = Math.floor(startY + player.y*CELL_HEIGHT);
+  drawRectangle(data, px, py, player_size, 5, 0xff0000);
 }
 
 function render(r: Renderer): void
@@ -147,10 +158,10 @@ function render(r: Renderer): void
     }
   }
 
-  if (keys.has('ArrowUp')) r.player.y--;
-  if (keys.has('ArrowDown')) r.player.y++;
-  if (keys.has('ArrowLeft')) r.player.x--;
-  if (keys.has('ArrowRight')) r.player.x++;
+  if (keys.has('ArrowUp') || keys.has('w')) r.player.y -= 0.03;
+  if (keys.has('ArrowDown') || keys.has('s')) r.player.y += 0.03;
+  if (keys.has('ArrowLeft') || keys.has('a')) r.player.x -= 0.03;
+  if (keys.has('ArrowRight') || keys.has('d')) r.player.x += 0.03;
   drawMinimap(r);
 
   ctx.putImageData(img, 0, 0);
@@ -159,6 +170,8 @@ function render(r: Renderer): void
   frame_count++;
   if (fps_printer && frame_count % 10 === 0)
     fps_printer.textContent = `${fps.toString()} FPS`;
+  if (player_printer)
+	  player_printer.textContent = `Player: x=${Math.round(r.player.x * 100) / 100}, y=${Math.round(r.player.y * 100) / 100}`;
 }
 
 function main(): void
@@ -180,14 +193,6 @@ function main(): void
   if (!data)
     throw new Error("image data");
 
-  // for (let y = 0; y < GRID_COLS; y++)
-  // {
-  //   for (let x = 0; x < GRID_ROWS; x++)
-  //   {
-  //     putPixel(imgData, {x, y}, { r: (x % 0xff), g: (y % 256), b: 150});
-  //   }
-  // }
-
   document.addEventListener("keydown", (e) => {
     e.preventDefault();
     keys.add(e.key);
@@ -198,8 +203,9 @@ function main(): void
   });
 
   fps_printer = document.querySelector('#fps');
+  player_printer = document.querySelector('#player');
 
-  const player = new Vector2(-1, -1);
+  const player = new Vector2(5.5, 5.5);
 
   const loop = () => {
     render({ctx, img, data, player});
