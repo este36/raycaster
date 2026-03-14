@@ -7,18 +7,18 @@ let fps_printer: HTMLParagraphElement | null = null;
 let player_printer: HTMLParagraphElement | null = null;
 let frame_count = 0;
 
-// const map = [
-//   1,1,1,1,1,1,1,1,1,1,
-//   1,0,0,0,0,0,0,0,0,1,
-//   1,0,0,0,0,0,0,0,0,1,
-//   1,0,0,0,0,0,0,0,0,1,
-//   1,0,0,0,0,0,0,0,0,1,
-//   1,0,0,0,0,0,0,0,0,1,
-//   1,0,0,0,0,0,0,0,0,1,
-//   1,0,0,0,0,0,0,0,0,1,
-//   1,0,0,0,0,0,0,0,0,1,
-//   1,1,1,1,1,1,1,1,1,1,
-// ];
+const map = [
+  1,1,1,1,1,1,1,1,1,1,
+  1,0,0,0,0,0,0,0,0,1,
+  1,0,0,0,0,0,0,0,0,1,
+  1,0,0,0,0,0,0,0,0,1,
+  1,0,0,0,0,0,0,0,0,1,
+  1,0,0,0,0,0,0,0,0,1,
+  1,0,0,0,0,0,0,0,0,1,
+  1,0,0,0,0,0,0,0,0,1,
+  1,0,0,0,0,0,0,0,0,1,
+  1,1,1,1,1,1,1,1,1,1,
+];
 
 const GRID_COLS = 10;
 const GRID_ROWS = 10;
@@ -142,6 +142,18 @@ function drawMinimap(r: Renderer): void
   drawRectangle(data, px, py, player_size, 5, 0xff0000);
 }
 
+function not_hitting_wall(playerX: number, playerY: number)
+{
+	const px = Math.floor(playerX);
+	const py = Math.floor(playerY);
+	console.log(px, py);
+	return (
+		px >= 0 && py >= 0
+		&& py < GRID_ROWS && px < GRID_COLS
+		&& map[px + (py*GRID_COLS)] === 0
+	);
+}
+
 function render(r: Renderer): void
 {
   const {ctx, img, data} = r;
@@ -158,10 +170,15 @@ function render(r: Renderer): void
     }
   }
 
-  if (keys.has('ArrowUp') || keys.has('w')) r.player.y -= 0.03;
-  if (keys.has('ArrowDown') || keys.has('s')) r.player.y += 0.03;
-  if (keys.has('ArrowLeft') || keys.has('a')) r.player.x -= 0.03;
-  if (keys.has('ArrowRight') || keys.has('d')) r.player.x += 0.03;
+  const step = 0.03;
+  if (not_hitting_wall(r.player.x, r.player.y - step)
+	&& keys.has('ArrowUp') || keys.has('w')) r.player.y -= step;
+  if (not_hitting_wall(r.player.x, r.player.y + step)
+	&& keys.has('ArrowDown') || keys.has('s')) r.player.y += step;
+  if (not_hitting_wall(r.player.x - step, r.player.y)
+	&& keys.has('ArrowLeft') || keys.has('a')) r.player.x -= step;
+  if (not_hitting_wall(r.player.x + step, r.player.y)
+	&& keys.has('ArrowRight') || keys.has('d')) r.player.x += step;
   drawMinimap(r);
 
   ctx.putImageData(img, 0, 0);
