@@ -49,10 +49,10 @@ type Renderer = {
   player: Vector2;
 };
 
-function is_valid_point(x: number, y: number)
-{
-	return x > 0 && x < WIDTH && y > 0 && y < HEIGHT;
-}
+// function is_valid_point(x: number, y: number)
+// {
+// 	return x > 0 && x < WIDTH && y > 0 && y < HEIGHT;
+// }
 
 function putPixelRGB(data: Uint8ClampedArray, x: number, y: number, r: number, g: number, b: number): void
 {
