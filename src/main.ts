@@ -22,7 +22,7 @@ const map = [
 
 const GRID_COLS = 10;
 const GRID_ROWS = 10;
-const GRID_SIZE = GRID_ROWS*GRID_COLS;
+// const GRID_SIZE = GRID_ROWS*GRID_COLS;
 
 const MINIMAP_WIDTH = Math.floor(WIDTH / 4);
 const MINIMAP_HEIGHT = MINIMAP_WIDTH; // square for now
