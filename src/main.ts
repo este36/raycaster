@@ -22,6 +22,7 @@ const map = [
 
 const GRID_COLS = 10;
 const GRID_ROWS = 10;
+const GRID_SIZE = GRID_ROWS*GRID_COLS;
 
 const MINIMAP_WIDTH = Math.floor(WIDTH / 4);
 const MINIMAP_HEIGHT = MINIMAP_WIDTH; // square for now
@@ -117,6 +118,14 @@ function drawMinimap(r: Renderer): void
   const startY = HEIGHT - MINIMAP_HEIGHT - 5;
 
   drawRectangle(data, startX, startY, MINIMAP_WIDTH, MINIMAP_HEIGHT, 0x181818);
+  for (let y = 0; y < GRID_ROWS; y++)
+  {
+	  for (let x = 0; x < GRID_COLS; x++)
+	  {
+		  if (map[y+(x*GRID_COLS)] !== 0)
+			  drawRectangle(data, startX + CELL_WIDTH*x, startY + CELL_HEIGHT*y, CELL_WIDTH, CELL_HEIGHT, 0xffcc11);
+	  }
+  }
 
   // Grid
   const gridColor = 0x999999;
