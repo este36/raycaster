@@ -9,12 +9,12 @@ let frame_count = 0;
 
 const map = [
   1,1,1,1,1,1,1,1,1,1,
+  1,0,1,0,0,0,0,0,0,1,
+  1,0,1,0,0,0,0,0,0,1,
   1,0,0,0,0,0,0,0,0,1,
-  1,0,0,0,0,0,0,0,0,1,
-  1,0,0,0,0,0,0,0,0,1,
-  1,0,0,0,0,0,0,0,0,1,
-  1,0,0,0,0,0,0,0,0,1,
-  1,0,0,0,0,0,0,0,0,1,
+  1,0,1,0,0,0,0,0,0,1,
+  1,0,1,0,0,0,0,0,0,1,
+  1,0,1,0,0,0,0,0,0,1,
   1,0,0,0,0,0,0,0,0,1,
   1,0,0,0,0,0,0,0,0,1,
   1,1,1,1,1,1,1,1,1,1,
@@ -122,27 +122,27 @@ function drawMinimap(r: Renderer): void
   {
 	  for (let x = 0; x < GRID_COLS; x++)
 	  {
-		  if (map[y+(x*GRID_COLS)] !== 0)
+		  if (map[x+(y*GRID_COLS)] !== 0)
 			  drawRectangle(data, startX + CELL_WIDTH*x, startY + CELL_HEIGHT*y, CELL_WIDTH, CELL_HEIGHT, 0xffcc11);
 	  }
   }
 
   // Grid
-  const gridColor = 0x999999;
-  let gridY = startY;
-  for (let i = 0; i < GRID_COLS; i++)
-  {
-  	drawLine(data, new Vector2(startX, gridY), new Vector2(startX + MINIMAP_WIDTH, gridY), gridColor);
-	gridY += CELL_HEIGHT;
-  }
-  drawLine(data, new Vector2(startX, gridY), new Vector2(startX + MINIMAP_WIDTH, gridY), gridColor);
-  let gridX = startX;
-  for (let i = 0; i < GRID_ROWS; i++)
-  {
-  	drawLine(data, new Vector2(gridX, startY), new Vector2(gridX, startY + MINIMAP_HEIGHT), gridColor);
-	gridX += CELL_WIDTH;
-  }
-  drawLine(data, new Vector2(gridX, startY), new Vector2(gridX, startY + MINIMAP_HEIGHT), gridColor);
+  // const gridColor = 0x999999;
+  // let gridY = startY;
+  // for (let i = 0; i < GRID_COLS; i++)
+  // {
+  // 	drawLine(data, new Vector2(startX, gridY), new Vector2(startX + MINIMAP_WIDTH, gridY), gridColor);
+  //   gridY += CELL_HEIGHT;
+  // }
+  // drawLine(data, new Vector2(startX, gridY), new Vector2(startX + MINIMAP_WIDTH, gridY), gridColor);
+  // let gridX = startX;
+  // for (let i = 0; i < GRID_ROWS; i++)
+  // {
+  // 	drawLine(data, new Vector2(gridX, startY), new Vector2(gridX, startY + MINIMAP_HEIGHT), gridColor);
+  //   gridX += CELL_WIDTH;
+  // }
+  // drawLine(data, new Vector2(gridX, startY), new Vector2(gridX, startY + MINIMAP_HEIGHT), gridColor);
 
   // Player
   const player_size = 5;
@@ -181,13 +181,13 @@ function render(r: Renderer): void
 
   const step = 0.03;
   if (not_hitting_wall(r.player.x, r.player.y - step)
-	&& keys.has('ArrowUp') || keys.has('w')) r.player.y -= step;
+	&& (keys.has('ArrowUp') || keys.has('w'))) r.player.y -= step;
   if (not_hitting_wall(r.player.x, r.player.y + step)
-	&& keys.has('ArrowDown') || keys.has('s')) r.player.y += step;
+	&& (keys.has('ArrowDown') || keys.has('s'))) r.player.y += step;
   if (not_hitting_wall(r.player.x - step, r.player.y)
-	&& keys.has('ArrowLeft') || keys.has('a')) r.player.x -= step;
+	&& (keys.has('ArrowLeft') || keys.has('a'))) r.player.x -= step;
   if (not_hitting_wall(r.player.x + step, r.player.y)
-	&& keys.has('ArrowRight') || keys.has('d')) r.player.x += step;
+	&& (keys.has('ArrowRight') || keys.has('d'))) r.player.x += step;
   drawMinimap(r);
 
   ctx.putImageData(img, 0, 0);
